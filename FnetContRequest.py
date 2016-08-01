@@ -20,20 +20,25 @@ DATAGET = BASE + 'cgi-bin/dataget.cgi'
 DATADOWN = BASE + 'dlDialogue.php'
 auth = ('username', 'password')
 
+if len(sys.argv) != 8:
+    sys.exit("Usage: python %s year month day hour min sec duration" % sys.argv[0])
+
+year, month, day, hour, min, sec, duration = sys.argv[1:]
+
 data = {
     'format': 'SEED',
     'archive': 'zip',
     'station': 'ALL',
     'component': 'BHZ',
     'time': 'UT',
-    's_year': '2016',
-    's_month': '01',
-    's_day': '01',
-    's_hour': '00',
-    's_min': '00',
-    's_sec': '00',
+    's_year': year,
+    's_month': month,
+    's_day': day,
+    's_hour': hour,
+    's_min': min,
+    's_sec': sec,
     'end': 'duration',
-    'sec': '300',
+    'sec': duration,
 }
 
 # post data request
