@@ -61,12 +61,13 @@ r = requests.get(DATAGET + "?data=" + id, auth=auth)
 
 # download data
 r = requests.get(DATADOWN + '?_f=' + id, auth=auth, stream=True)
-total_length = int(r.headers.get('Content-Length'))
-fname = "%s%s%s%s%s%s" % (year, month, day, hour, min, sec)
 z = zipfile.ZipFile(io.BytesIO(r.content))
 for f in z.filelist:
     root, ext = os.path.splitext(f.filename)
     if ext == '.log':
         continue
-    f.filename = fname + ext
-    z.extract(f)
+    if data['format'] == 'SEED':
+        f.filename = "%s%s%s%s%s%s" % (year, month, day, hour, min, sec) + ext
+        z.extract(f)
+    elif data['format'] in ['MSEED', 'SAC', 'TEXT']:
+        z.extract(f)
