@@ -59,7 +59,7 @@ r = requests.get(DATAGET + "?data=" + id, auth=auth)
 # download data
 r = requests.get(DATADOWN + '?_f=' + id, auth=auth, stream=True)
 total_length = int(r.headers.get('Content-Length'))
-fname = "test.zip"
+fname = "%s%s%s%s%s%s.zip" % (year, month, day, hour, min, sec)
 with open(fname, "wb") as fd:
     for chunk in r.iter_content(1024):
         fd.write(chunk)
