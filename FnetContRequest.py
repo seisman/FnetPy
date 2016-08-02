@@ -7,13 +7,14 @@
 """Request continuous waveform data from NIED F-net.
 """
 
+import io
 import os
 import re
 import sys
 import time
+import zipfile
 import requests
 
-from docopt import docopt
 
 BASE = 'http://www.fnet.bosai.go.jp/auth/dataget/'
 DATAGET = BASE + 'cgi-bin/dataget.cgi'
@@ -27,7 +28,7 @@ year, month, day, hour, min, sec, duration = sys.argv[1:]
 
 data = {
     'format': 'SEED',
-    'archive': 'zip',
+    'archive': 'zip',  # always use ZIP format
     'station': 'ALL',
     'component': 'BHZ',
     'time': 'UT',
@@ -45,6 +46,8 @@ data = {
 r = requests.post(DATAGET, auth=auth, data=data)
 if r.status_code == 401:
     sys.exit("Error in username or password!")
+elif r.status_code != 200:
+    sys.exit("Something wrong happened!")
 
 # extract data id
 m = re.search(r'dataget\.cgi\?data=(NIED_\d+\.zip)&', r.text)
@@ -59,10 +62,11 @@ r = requests.get(DATAGET + "?data=" + id, auth=auth)
 # download data
 r = requests.get(DATADOWN + '?_f=' + id, auth=auth, stream=True)
 total_length = int(r.headers.get('Content-Length'))
-fname = "%s%s%s%s%s%s.zip" % (year, month, day, hour, min, sec)
-with open(fname, "wb") as fd:
-    for chunk in r.iter_content(1024):
-        fd.write(chunk)
-
-if os.path.getsize(fname) != total_length:
-    sys.exit("error")
+fname = "%s%s%s%s%s%s" % (year, month, day, hour, min, sec)
+z = zipfile.ZipFile(io.BytesIO(r.content))
+for f in z.filelist:
+    root, ext = os.path.splitext(f.filename)
+    if ext == '.log':
+        continue
+    f.filename = fname + ext
+    z.extract(f)
