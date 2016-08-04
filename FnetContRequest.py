@@ -11,7 +11,6 @@ import io
 import os
 import re
 import sys
-import time
 import zipfile
 import requests
 
@@ -25,6 +24,9 @@ if len(sys.argv) != 8:
     sys.exit("Usage: python %s year month day hour min sec duration" % sys.argv[0])
 
 year, month, day, hour, min, sec, duration = sys.argv[1:]
+
+if int(year) < 1995:
+    sys.exit("No data avaiable before year 1995.")
 
 data = {
     'format': 'SEED',
@@ -44,10 +46,12 @@ data = {
 
 # post data request
 r = requests.post(DATAGET, auth=auth, data=data)
-if r.status_code == 401:
-    sys.exit("Error in username or password!")
+if r.status_code == 401:  # username is right, password is wrong
+    sys.exit("Unauthorized! Please check your username and password!")
+elif r.status_code == 500:  # internal server error, or username is wrong
+    sys.exit("Internal server error! Or you're using the wrong username!")
 elif r.status_code != 200:
-    sys.exit("Something wrong happened!")
+    sys.exit("Something wrong happened! Status code = %d" % (r.status_code))
 
 # extract data id
 m = re.search(r'dataget\.cgi\?data=(NIED_\d+\.zip)&', r.text)
@@ -61,6 +65,15 @@ r = requests.get(DATAGET + "?data=" + id, auth=auth)
 
 # download data
 r = requests.get(DATADOWN + '?_f=' + id, auth=auth, stream=True)
+if r.text == 'Could not open your requested file.':
+    sys.stderr.write(r.text + '\n')
+    sys.stderr.write("Possible reasons:\n"
+                     "1. Something wrong happened to the Fnet server.\n"
+                     "2. No data avaiable in your requested time range.\n"
+                     "3. Multiple requests at the same time.\n"
+                    )
+    sys.exit()
+
 z = zipfile.ZipFile(io.BytesIO(r.content))
 for f in z.filelist:
     root, ext = os.path.splitext(f.filename)
