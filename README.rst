@@ -1,4 +1,4 @@
-FnetPy is a Python package to request seismic waveform data from [NIED F-net](http://www.fnet.bosai.go.jp).
+FnetPy is a Python package to request seismic waveform data from `NIED F-net <http://www.fnet.bosai.go.jp>`_.
 
 Usage
 =====
