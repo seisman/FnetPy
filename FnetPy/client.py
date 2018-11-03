@@ -30,6 +30,7 @@ class Client(object):
         station="ALL",
         component="BHX",
         time="UT",
+        filename=None
     ):
         """Get waveform data from NIED F-net."""
 
@@ -86,7 +87,13 @@ class Client(object):
                 "2. No data avaiable in your requested time range.\n"
                 "3. Multiple requests at the same time.\n"
             )
-            sys.exit()
+            return None
+
+        if not filename:
+            filename = starttime.strftime("%Y%m%d%H%M%S") + '.SEED'
+        dirname = os.path.dirname(filename)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname, exist_ok=True)
 
         z = zipfile.ZipFile(io.BytesIO(r.content))
         for f in z.filelist:
@@ -94,7 +101,8 @@ class Client(object):
             if ext == ".log":
                 continue
             if data["format"] == "SEED":
-                f.filename = starttime.strftime("%Y%m%d%H%M%S") + ext
+                f.filename = filename
                 z.extract(f)
+                return f.filename
             elif data["format"] in ["MSEED", "SAC", "TEXT"]:
-                z.extract(f)
+                sys.exit("Only SEED format is supported now.")
