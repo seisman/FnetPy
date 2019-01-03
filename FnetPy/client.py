@@ -26,7 +26,6 @@ class Client(object):
         starttime,
         duration_in_seconds,
         format="SEED",
-        archive="zip",
         station="ALL",
         component="BHX",
         time="UT",
@@ -34,8 +33,12 @@ class Client(object):
     ):
         """Get waveform data from NIED F-net."""
 
-        if int(starttime.strftime("%Y")) < 1995:
+        if starttime.year < 1995:
             raise ValueError("No data avaiable before year 1995.")
+
+        # check data format
+        if format not in ["MSEED", "SEED", "SAC", "TEXT"]:
+            raise ValueError("Data format error, choose from MSEED, SEED, SAC or TEXT.")
 
         # BH? => BHX
         component = component.replace('?', 'X')
