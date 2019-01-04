@@ -82,9 +82,6 @@ class Client():
         if "Our data server is very busy now." in r.text:
             sys.stderr.write("Something wrong with the F-net server.\n")
             return None
-        if "Your request did not accepted because the data dose not exist." in r.text:
-            sys.stderr.write("No data available in your request time range.\n")
-            return None
 
         # download data
         r = self.session.get(
