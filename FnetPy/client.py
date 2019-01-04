@@ -11,7 +11,8 @@ import zipfile
 import requests
 
 
-class Client(object):
+class Client():
+    """Client for F-net server."""
     FNET = "http://www.fnet.bosai.go.jp/auth/dataget/"
     DATAGET = FNET + "cgi-bin/dataget.cgi"
     DATADOWN = FNET + "dlDialogue.php"
@@ -22,14 +23,14 @@ class Client(object):
         self.timeout = timeout
 
     def get_waveform(
-        self,
-        starttime,
-        duration_in_seconds,
-        format="SEED",
-        station="ALL",
-        component="BHX",
-        time="UT",
-        filename=None,
+            self,
+            starttime,
+            duration_in_seconds,
+            format="SEED",
+            station="ALL",
+            component="BHX",
+            time="UT",
+            filename=None,
     ):
         """Get waveform data from NIED F-net."""
 
@@ -70,23 +71,24 @@ class Client(object):
         # extract data id
         m = re.search(r"dataget\.cgi\?data=(NIED_\d+\.zip)&", r.text)
         if m:
-            id = m.group(1)
+            data_id = m.group(1)
         else:
             sys.stderr.write(r.text)
             sys.exit("Error in parsing HTML!")
 
         # check if data preparation is done
-        r = self.session.get(self.DATAGET + "?data=" + id, auth=self.session.auth)
+        r = self.session.get(self.DATAGET + "?data=" + data_id,
+                             auth=self.session.auth)
         if "Our data server is very busy now." in r.text:
             sys.stderr.write("Something wrong with the F-net server.\n")
             return None
-        elif "Your request did not accepted because the data dose not exist." in r.text:
+        if "Your request did not accepted because the data dose not exist." in r.text:
             sys.stderr.write("No data available in your request time range.\n")
             return None
 
         # download data
         r = self.session.get(
-            self.DATADOWN + "?_f=" + id, auth=self.session.auth, stream=True
+            self.DATADOWN + "?_f=" + data_id, auth=self.session.auth, stream=True
         )
         if r.text == "Could not open your requested file.":
             sys.stderr.write(r.text + "\n")
