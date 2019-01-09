@@ -38,8 +38,8 @@ class Client():
             raise ValueError("No data avaiable before year 1995.")
 
         # check data format
-        if format not in ["MSEED", "SEED", "SAC", "TEXT"]:
-            raise ValueError("Data format error, choose from MSEED, SEED, SAC or TEXT.")
+        if format not in ["SEED"]:
+            raise ValueError("Data format error, currently only support SEED.")
 
         # BH? => BHX
         component = component.replace("?", "X")
@@ -100,17 +100,15 @@ class Client():
         if not filename:
             filename = starttime.strftime("%Y%m%d%H%M%S") + ".SEED"
         dirname = os.path.dirname(filename)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname, exist_ok=True)
 
         z = zipfile.ZipFile(io.BytesIO(r.content))
         for f in z.filelist:
             ext = os.path.splitext(f.filename)[1]
-            if ext == ".log":
-                continue
-            if data["format"] == "SEED":
+            if ext == '.SEED' and f.file_size != 0:
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname, exist_ok=True)
                 f.filename = filename
                 z.extract(f)
                 return f.filename
-            elif data["format"] in ["MSEED", "SAC", "TEXT"]:
-                sys.exit("Only SEED format is supported now.")
+            else:
+                return None
