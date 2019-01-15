@@ -104,7 +104,7 @@ class Client():
         z = zipfile.ZipFile(io.BytesIO(r.content))
         for f in z.filelist:
             ext = os.path.splitext(f.filename)[1]
-            if ext == '.SEED' and f.file_size != 0:
+            if ext.lower() == '.seed' and f.file_size != 0:
                 if not os.path.exists(dirname):
                     os.makedirs(dirname, exist_ok=True)
                 f.filename = filename
