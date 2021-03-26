@@ -13,7 +13,7 @@ import requests
 
 class Client():
     """Client for F-net server."""
-    FNET = "http://www.fnet.bosai.go.jp/auth/dataget/"
+    FNET = "https://www.fnet.bosai.go.jp/auth/dataget/"
     DATAGET = FNET + "cgi-bin/dataget.cgi"
     DATADOWN = FNET + "dlDialogue.php"
 
@@ -105,7 +105,7 @@ class Client():
         for f in z.filelist:
             ext = os.path.splitext(f.filename)[1]
             if ext.lower() == '.seed' and f.file_size != 0:
-                if not os.path.exists(dirname):
+                if dirname and not os.path.exists(dirname):
                     os.makedirs(dirname, exist_ok=True)
                 f.filename = filename
                 z.extract(f)
