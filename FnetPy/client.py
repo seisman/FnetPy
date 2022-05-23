@@ -11,6 +11,17 @@ import zipfile
 import requests
 
 
+# Hacking solution for "SSLError(1, '[SSL: DH_KEY_TOO_SMALL] dh key too small)"
+# Reference: https://stackoverflow.com/a/41041028
+requests.packages.urllib3.disable_warnings()
+requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
+try:
+    requests.packages.urllib3.contrib.pyopenssl.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
+except AttributeError:
+    # no pyopenssl support used / needed / available
+    pass
+
+
 class Client():
     """Client for F-net server."""
     FNET = "https://www.fnet.bosai.go.jp/auth/dataget/"
