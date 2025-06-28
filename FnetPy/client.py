@@ -8,19 +8,21 @@ import os
 import re
 import sys
 import zipfile
+import certifi
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3 import PoolManager
+from urllib3.util import create_urllib3_context
 
 
-# Hacking solution for "SSLError(1, '[SSL: DH_KEY_TOO_SMALL] dh key too small)"
-# Reference: https://stackoverflow.com/a/41041028
-requests.packages.urllib3.disable_warnings()
-requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
-try:
-    requests.packages.urllib3.contrib.pyopenssl.util.ssl_.DEFAULT_CIPHERS += ':HIGH:!DH:!aNULL'
-except AttributeError:
-    # no pyopenssl support used / needed / available
-    pass
-
+# Hacking solution for "ssl.SSLError: [SSL: DH_KEY_TOO_SMALL] dh key too small" error.
+# Reference: https://stackoverflow.com/a/76217135
+class AddedCipherAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+        ctx = create_urllib3_context(ciphers=":HIGH:!DH:!aNULL")
+        self.poolmanager = PoolManager(
+            num_pools=connections, maxsize=maxsize, block=block, ssl_context=ctx
+        )
 
 class Client():
     """Client for F-net server."""
@@ -30,6 +32,8 @@ class Client():
 
     def __init__(self, user, password, timeout=120):
         self.session = requests.Session()
+        self.session.mount(self.DATAGET, AddedCipherAdapter())
+        self.session.mount(self.DATADOWN, AddedCipherAdapter())
         self.session.auth = (user, password)
         self.timeout = timeout
 
@@ -71,7 +75,7 @@ class Client():
             "time": time,
         }
 
-        r = self.session.post(self.DATAGET, auth=self.session.auth, data=data)
+        r = self.session.post(self.DATAGET, auth=self.session.auth, data=data, verify=certifi.where())
         if r.status_code == 401:  # username is right, password is wrong
             sys.exit("Unauthorized! Please check your username and password!")
         elif r.status_code == 500:  # internal server error, or username is wrong
